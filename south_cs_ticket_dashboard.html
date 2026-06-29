@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>South CS · Ticket Dashboard · June 29, 2026</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  :root {
+    --bg: #f5f4f0;
+    --surface: #ffffff;
+    --surface-alt: #f9f8f5;
+    --border: rgba(11,11,11,0.10);
+    --border-strong: rgba(11,11,11,0.18);
+    --text-primary: #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted: #898781;
+    --accent: #2a78d6;
+    --accent-bg: #e6f1fb;
+    --accent-text: #0c447c;
+    --success: #1baf7a;
+    --success-bg: #e1f5ee;
+    --success-text: #085041;
+    --warning: #ba7517;
+    --warning-bg: #faeeda;
+    --warning-text: #633806;
+    --danger: #a32d2d;
+    --danger-bg: #fcebeb;
+    --danger-text: #a32d2d;
+    --violet: #4a3aa7;
+    --violet-bg: #eeedfe;
+    --violet-text: #3c3489;
+    --radius: 8px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.04);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text-primary);
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+  }
+  .header-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .brand-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+  .brand-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+  .brand-sep { color: var(--border-strong); margin: 0 2px; }
+  .brand-sub { font-size: 13px; color: var(--text-muted); }
+  .header-date {
+    font-size: 12px;
+    color: var(--text-muted);
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 4px 12px;
+  }
+
+  /* ── Layout ── */
+  .main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+
+  /* ── Section headers ── */
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin: 2rem 0 1rem;
+  }
+  .section-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+  }
+  .section-line {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+  .section-count {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  /* ── KPI row ── */
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 0;
+  }
+  .kpi {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem 1.25rem 1rem;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .kpi.visible { opacity: 1; transform: translateY(0); }
+  .kpi-accent-bar {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .kpi-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    margin-bottom: 8px;
+  }
+  .kpi-value {
+    font-size: 32px;
+    font-weight: 500;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  .kpi-sub {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  /* ── Two-column grid ── */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  .grid-3 {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 14px;
+  }
+
+  /* ── Card ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem;
+    box-shadow: var(--shadow);
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .card.visible { opacity: 1; transform: translateY(0); }
+  .card-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .card-title-icon {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+  }
+
+  /* ── Owner rows ── */
+  .owner-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .owner-row:last-child { border-bottom: none; }
+  .avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+  .owner-meta { flex: 1; min-width: 0; }
+  .owner-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .owner-role {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 1px;
+  }
+  .bar-track {
+    flex: 1;
+    background: var(--bg);
+    border-radius: 3px;
+    height: 5px;
+    overflow: hidden;
+    min-width: 60px;
+  }
+  .bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    width: 0;
+    transition: width 0.8s cubic-bezier(0.16,1,0.3,1);
+  }
+  .owner-count {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    min-width: 22px;
+    text-align: right;
+  }
+
+  /* ── Stage rows ── */
+  .stage-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .stage-row:last-child { border-bottom: none; }
+  .stage-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .stage-name {
+    font-size: 13px;
+    color: var(--text-primary);
+    flex: 1;
+  }
+  .stage-bar-track {
+    width: 90px;
+    background: var(--bg);
+    border-radius: 3px;
+    height: 5px;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .stage-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    width: 0;
+    transition: width 0.8s cubic-bezier(0.16,1,0.3,1);
+  }
+  .stage-count {
+    font-size: 13px;
+    font-weight: 500;
+    min-width: 22px;
+    text-align: right;
+  }
+  .stage-pct {
+    font-size: 11px;
+    color: var(--text-muted);
+    min-width: 34px;
+    text-align: right;
+  }
+
+  /* ── Ticket table ── */
+  .ticket-table-wrap {
+    overflow-x: auto;
+  }
+  .ticket-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    min-width: 580px;
+  }
+  .ticket-table th {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    text-align: left;
+    padding: 0 10px 10px 0;
+    border-bottom: 1px solid var(--border-strong);
+    white-space: nowrap;
+  }
+  .ticket-table td {
+    padding: 9px 10px 9px 0;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+    color: var(--text-primary);
+  }
+  .ticket-table tr:last-child td { border-bottom: none; }
+  .ticket-table tr {
+    opacity: 0;
+    transform: translateX(-6px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+  .ticket-table tr.visible {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  .subj-cell {
+    max-width: 260px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 500;
+  }
+  .badge {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    display: inline-block;
+  }
+  .owner-cell {
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .mini-avatar {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 8px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  /* ── Alert box ── */
+  .alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    background: var(--warning-bg);
+    border: 1px solid rgba(186,117,23,0.25);
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    font-size: 13px;
+    color: var(--warning-text);
+    margin-top: 1.5rem;
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.4s ease 0.3s, transform 0.4s ease 0.3s;
+  }
+  .alert.visible { opacity: 1; transform: translateY(0); }
+  .alert-icon { font-size: 15px; flex-shrink: 0; margin-top: 1px; }
+
+  /* ── Donut legend ── */
+  .donut-wrap {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+  }
+  .donut-canvas-wrap {
+    width: 140px;
+    height: 140px;
+    flex-shrink: 0;
+    position: relative;
+  }
+  .donut-center {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    pointer-events: none;
+  }
+  .donut-center-num { font-size: 22px; font-weight: 500; color: var(--text-primary); line-height: 1; }
+  .donut-center-label { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+  .donut-legend { flex: 1; }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 0;
+  }
+  .legend-swatch {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+  .legend-label { font-size: 12px; color: var(--text-secondary); flex: 1; }
+  .legend-val { font-size: 12px; font-weight: 500; color: var(--text-primary); }
+
+  /* ── Resolution rate card ── */
+  .res-rate {
+    text-align: center;
+    padding: 0.5rem 0;
+  }
+  .res-big { font-size: 48px; font-weight: 500; color: var(--success); line-height: 1; }
+  .res-label { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+  .res-sub { font-size: 12px; color: var(--text-secondary); margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+
+  /* ── Footer ── */
+  .footer {
+    max-width: 1100px;
+    margin: 3rem auto 2rem;
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--text-muted);
+    border-top: 1px solid var(--border);
+    padding-top: 1.5rem;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 768px) {
+    .main { padding: 1rem; }
+    .kpi-row { grid-template-columns: 1fr 1fr; }
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 480px) {
+    .kpi-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── HEADER ── -->
+<header class="header">
+  <div class="header-inner">
+    <div class="header-brand">
+      <div class="brand-dot"></div>
+      <span class="brand-name">PM International</span>
+      <span class="brand-sep">·</span>
+      <span class="brand-sub">South Customer Service</span>
+    </div>
+    <div class="header-date">June 29, 2026 · HubSpot data</div>
+  </div>
+</header>
+
+<!-- ── MAIN ── -->
+<main class="main">
+
+  <!-- KPIs -->
+  <div class="section-header" style="margin-top:0.5rem;">
+    <span class="section-title">Overview</span>
+    <div class="section-line"></div>
+  </div>
+
+  <div class="kpi-row">
+    <div class="kpi" data-delay="0">
+      <div class="kpi-accent-bar" style="background:#2a78d6;"></div>
+      <div class="kpi-label">Open tickets</div>
+      <div class="kpi-value" style="color:#2a78d6;" id="kpi-open">0</div>
+      <div class="kpi-sub">currently active</div>
+    </div>
+    <div class="kpi" data-delay="80">
+      <div class="kpi-accent-bar" style="background:#1baf7a;"></div>
+      <div class="kpi-label">Closed tickets</div>
+      <div class="kpi-value" style="color:#1baf7a;" id="kpi-closed">0</div>
+      <div class="kpi-sub">have a close date</div>
+    </div>
+    <div class="kpi" data-delay="160">
+      <div class="kpi-accent-bar" style="background:#ba7517;"></div>
+      <div class="kpi-label">Unassigned open</div>
+      <div class="kpi-value" style="color:#ba7517;" id="kpi-unassigned">0</div>
+      <div class="kpi-sub">no owner set</div>
+    </div>
+    <div class="kpi" data-delay="240">
+      <div class="kpi-accent-bar" style="background:#a32d2d;"></div>
+      <div class="kpi-label">Oldest open</div>
+      <div class="kpi-value" style="color:#a32d2d;">48d</div>
+      <div class="kpi-sub">since May 12</div>
+    </div>
+  </div>
+
+  <!-- Owner + Stage -->
+  <div class="section-header">
+    <span class="section-title">Open ticket breakdown</span>
+    <div class="section-line"></div>
+    <span class="section-count">71 total</span>
+  </div>
+
+  <div class="grid-2">
+    <!-- Owner card -->
+    <div class="card" data-delay="0">
+      <div class="card-title">
+        <span>By agent</span>
+        <span style="font-size:11px;color:var(--text-muted);font-weight:400;">of 71 open</span>
+      </div>
+      <div class="owner-row">
+        <div class="avatar" style="background:#E6F1FB;color:#0C447C;">YE</div>
+        <div class="owner-meta">
+          <div class="owner-name">Yuribel Estrada</div>
+          <div class="owner-role">South CS Agent</div>
+        </div>
+        <div class="bar-track"><div class="bar-fill" data-width="70" style="background:#2a78d6;"></div></div>
+        <div class="owner-count" style="color:#2a78d6;">43</div>
+      </div>
+      <div class="owner-row">
+        <div class="avatar" style="background:#E1F5EE;color:#085041;">GF</div>
+        <div class="owner-meta">
+          <div class="owner-name">Giosuè Finelli</div>
+          <div class="owner-role">South CS Agent</div>
+        </div>
+        <div class="bar-track"><div class="bar-fill" data-width="22" style="background:#1baf7a;"></div></div>
+        <div class="owner-count" style="color:#1baf7a;">10</div>
+      </div>
+      <div class="owner-row">
+        <div class="avatar" style="background:#FAEEDA;color:#633806;">JB</div>
+        <div class="owner-meta">
+          <div class="owner-name">Janice Bae</div>
+          <div class="owner-role">South CS Agent</div>
+        </div>
+        <div class="bar-track"><div class="bar-fill" data-width="10" style="background:#eda100;"></div></div>
+        <div class="owner-count" style="color:#eda100;">4</div>
+      </div>
+      <div class="owner-row">
+        <div class="avatar" style="background:#FAECE7;color:#712B13;">YM</div>
+        <div class="owner-meta">
+          <div class="owner-name">Yun Martin</div>
+          <div class="owner-role">South CS Agent</div>
+        </div>
+        <div class="bar-track"><div class="bar-fill" data-width="5" style="background:#e34948;"></div></div>
+        <div class="owner-count" style="color:#e34948;">2</div>
+      </div>
+      <div class="owner-row">
+        <div class="avatar" style="background:#f1efe8;color:#888780;">—</div>
+        <div class="owner-meta">
+          <div class="owner-name" style="color:var(--text-muted);">Unassigned</div>
+          <div class="owner-role">needs assignment</div>
+        </div>
+        <div class="bar-track"><div class="bar-fill" data-width="17" style="background:#888780;"></div></div>
+        <div class="owner-count" style="color:#ba7517;">12</div>
+      </div>
+    </div>
+
+    <!-- Stage card -->
+    <div class="card" data-delay="80">
+      <div class="card-title">
+        <span>By pipeline stage</span>
+        <span style="font-size:11px;color:var(--text-muted);font-weight:400;">open only</span>
+      </div>
+      <div class="stage-row">
+        <div class="stage-dot" style="background:#e34948;"></div>
+        <span class="stage-name">New</span>
+        <div class="stage-bar-track"><div class="stage-bar-fill" data-width="18" style="background:#e34948;"></div></div>
+        <span class="stage-count" style="color:#e34948;">13</span>
+        <span class="stage-pct">18%</span>
+      </div>
+      <div class="stage-row">
+        <div class="stage-dot" style="background:#eda100;"></div>
+        <span class="stage-name">Waiting on contact</span>
+        <div class="stage-bar-track"><div class="stage-bar-fill" data-width="73" style="background:#eda100;"></div></div>
+        <span class="stage-count" style="color:#eda100;">52</span>
+        <span class="stage-pct">73%</span>
+      </div>
+      <div class="stage-row">
+        <div class="stage-dot" style="background:#2a78d6;"></div>
+        <span class="stage-name">Waiting on us</span>
+        <div class="stage-bar-track"><div class="stage-bar-fill" data-width="1" style="background:#2a78d6;"></div></div>
+        <span class="stage-count" style="color:#2a78d6;">1</span>
+        <span class="stage-pct">1%</span>
+      </div>
+      <div class="stage-row">
+        <div class="stage-dot" style="background:#4a3aa7;"></div>
+        <span class="stage-name">In progress / other</span>
+        <div class="stage-bar-track"><div class="stage-bar-fill" data-width="7" style="background:#4a3aa7;"></div></div>
+        <span class="stage-count" style="color:#4a3aa7;">5</span>
+        <span class="stage-pct">7%</span>
+      </div>
+
+      <!-- Mini note -->
+      <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border);">
+        <div style="font-size:12px;color:var(--text-muted);">73% waiting on contact is healthy — the team has responded. Priority: the 13 in <strong style="color:#e34948;font-weight:500;">New</strong> that haven't been touched.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts: Donut + Resolution rate -->
+  <div class="section-header">
+    <span class="section-title">Volume &amp; resolution</span>
+    <div class="section-line"></div>
+    <span class="section-count">5,482 total</span>
+  </div>
+
+  <div class="grid-3">
+    <!-- Donut chart card -->
+    <div class="card" data-delay="0">
+      <div class="card-title"><span>Open vs closed — all time</span></div>
+      <div class="donut-wrap">
+        <div class="donut-canvas-wrap">
+          <canvas id="donutChart" aria-label="Donut chart: 71 open tickets (1.3%) and 5,411 closed tickets (98.7%)" role="img">71 open, 5,411 closed.</canvas>
+          <div class="donut-center">
+            <div class="donut-center-num">5,482</div>
+            <div class="donut-center-label">total tickets</div>
+          </div>
+        </div>
+        <div class="donut-legend">
+          <div class="legend-item">
+            <div class="legend-swatch" style="background:#2a78d6;"></div>
+            <span class="legend-label">Open</span>
+            <span class="legend-val">71 <span style="color:var(--text-muted);font-weight:400;">(1.3%)</span></span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-swatch" style="background:#1baf7a;"></div>
+            <span class="legend-label">Closed</span>
+            <span class="legend-val">5,411 <span style="color:var(--text-muted);font-weight:400;">(98.7%)</span></span>
+          </div>
+          <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border);">
+            <div style="font-size:11px;color:var(--text-muted);line-height:1.6;">Data pulled from HubSpot CRM · Pipeline: 3624757493</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Resolution rate card -->
+    <div class="card" data-delay="100">
+      <div class="card-title"><span>Resolution rate</span></div>
+      <div class="res-rate">
+        <div class="res-big" id="res-counter">0%</div>
+        <div class="res-label">of all tickets resolved</div>
+        <div class="res-sub">
+          <strong style="font-weight:500;">5,411</strong> closed &nbsp;·&nbsp; <strong style="color:#ba7517;font-weight:500;">71</strong> still open
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Flagged tickets table -->
+  <div class="section-header">
+    <span class="section-title">Flagged open tickets</span>
+    <div class="section-line"></div>
+    <span class="section-count">sorted by age</span>
+  </div>
+
+  <div class="card" data-delay="0" style="padding-bottom:0.5rem;">
+    <div class="ticket-table-wrap">
+      <table class="ticket-table">
+        <thead>
+          <tr>
+            <th style="width:32%">Subject</th>
+            <th style="width:18%">Owner</th>
+            <th style="width:18%">Stage</th>
+            <th style="width:10%">Age</th>
+            <th style="width:22%">Priority / notes</th>
+          </tr>
+        </thead>
+        <tbody id="ticket-tbody">
+          <tr>
+            <td><div class="subj-cell">Fwd: Request via PM E-Business My Autoship</div></td>
+            <td><div class="owner-cell"><div class="mini-avatar" style="background:#f1efe8;color:#888780;">—</div><span style="color:#ba7517;">Unassigned</span></div></td>
+            <td><span class="badge" style="background:#eeedfe;color:#3c3489;">In progress</span></td>
+            <td><span class="badge" style="background:#fcebeb;color:#a32d2d;">48d</span></td>
+            <td style="font-size:12px;color:var(--text-muted);">Oldest open — needs triage</td>
+          </tr>
+          <tr>
+            <td><div class="subj-cell">TEST GIO 1</div></td>
+            <td><div class="owner-cell"><div class="mini-avatar" style="background:#f1efe8;color:#888780;">—</div><span style="color:#ba7517;">Unassigned</span></div></td>
+            <td><span class="badge" style="background:#fcebeb;color:#a32d2d;">New</span></td>
+            <td><span class="badge" style="background:#fcebeb;color:#a32d2d;">41d</span></td>
+            <td style="font-size:12px;color:var(--text-muted);">Likely a test — close or delete</td>
+          </tr>
+          <tr>
+            <td><div class="subj-cell">Dispute — Invoice 3069496, $201.60</div></td>
+            <td><div class="owner-cell"><div class="mini-avatar" style="background:#E1F5EE;color:#085041;">GF</div>Giosuè Finelli</div></td>
+            <td><span class="badge" style="background:#eeedfe;color:#3c3489;">In progress</span></td>
+            <td><span class="badge" style="background:#fcebeb;color:#a32d2d;">38d</span></td>
+            <td style="font-size:12px;color:var(--text-muted);">Debt validation dispute</td>
+          </tr>
+          <tr>
+            <td><div class="subj-cell">Reclamación de pedido</div></td>
+            <td><div class="owner-cell"><div class="mini-avatar" style="background:#E6F1FB;color:#0C447C;">YE</div>Yuribel Estrada</div></td>
+            <td><span class="badge" style="background:#faeeda;color:#633806;">Waiting on contact</span></td>
+            <td><span class="badge" style="background:#fcebeb;color:#a32d2d;">35d</span></td>
+            <td style="font-size:12px;color:var(--text-muted);">Order claim — follow up</td>
+          </tr>
+          <tr>
+            <td><div class="subj-cell">21297074 (member ID reference)</div></td>
+            <td><div class="owner-cell"><div class="mini-avatar" style="background:#E6F1FB;color:#0C447C;">YE</div>Yuribel Estrada</div></td>
+            <td><span class="badge" style="background:#faeeda;color:#633806;">Waiting on contact</span></td>
+            <td><span class="badge" style="background:#fcebeb;color:#a32d2d;">35d</span></td>
+            <td style="font-size:12px;color:var(--text-muted);">Member issue, no subject</td>
+          </tr>
+          <tr>
+            <td><div class="subj-cell">Sponsor change request</div></td>
+            <td><div class="owner-cell"><div class="mini-avatar" style="background:#FAEEDA;color:#633806;">JB</div>Janice Bae</div></td>
+            <td><span class="badge" style="background:#faeeda;color:#633806;">Waiting on contact</span></td>
+            <td><span class="badge" style="background:#fcebeb;color:#a32d2d;">27d</span></td>
+            <td style="font-size:12px;color:var(--text-muted);">Pending contact response</td>
+          </tr>
+          <tr>
+            <td><div class="subj-cell">Solicitud de devolución</div></td>
+            <td><div class="owner-cell"><div class="mini-avatar" style="background:#E6F1FB;color:#0C447C;">YE</div>Yuribel Estrada</div></td>
+            <td><span class="badge" style="background:#eeedfe;color:#3c3489;">In progress</span></td>
+            <td><span class="badge" style="background:#fcebeb;color:#a32d2d;">26d</span></td>
+            <td style="font-size:12px;color:var(--text-muted);">Return request — HIGH priority</td>
+          </tr>
+          <tr>
+            <td><div class="subj-cell">Anfrage wegen Vertrieb in Paraguay</div></td>
+            <td><div class="owner-cell"><div class="mini-avatar" style="background:#E1F5EE;color:#085041;">GF</div>Giosuè Finelli</div></td>
+            <td><span class="badge" style="background:#fcebeb;color:#a32d2d;">New</span></td>
+            <td><span class="badge" style="background:#faeeda;color:#633806;">3d</span></td>
+            <td style="font-size:12px;color:var(--text-muted);">Distribution inquiry — Paraguay</td>
+          </tr>
+          <tr>
+            <td><div class="subj-cell">Urgent: Technical Issue — New TP Registration (USA)</div></td>
+            <td><div class="owner-cell"><div class="mini-avatar" style="background:#f1efe8;color:#888780;">—</div><span style="color:#ba7517;">Unassigned</span></div></td>
+            <td><span class="badge" style="background:#fcebeb;color:#a32d2d;">New</span></td>
+            <td><span class="badge" style="background:#faeeda;color:#633806;">1d</span></td>
+            <td style="font-size:12px;color:var(--text-muted);">Urgent — no owner, needs claim</td>
+          </tr>
+          <tr>
+            <td><div class="subj-cell">Urgent: Order #3132860 — Arrived Damaged</div></td>
+            <td><div class="owner-cell"><div class="mini-avatar" style="background:#f1efe8;color:#888780;">—</div><span style="color:#ba7517;">Unassigned</span></div></td>
+            <td><span class="badge" style="background:#fcebeb;color:#a32d2d;">New</span></td>
+            <td><span class="badge" style="background:#e1f5ee;color:#085041;">&lt;1d</span></td>
+            <td style="font-size:12px;color:var(--text-muted);">Contaminated delivery — urgent</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Alert -->
+  <div class="alert" id="alert-box">
+    <span class="alert-icon">⚠</span>
+    <span><strong style="font-weight:500;">Email inbox access not available.</strong> The HubSpot connector requires reauthorization to read conversation/email data. To unlock unanswered email counts, disconnect and reconnect the HubSpot integration in your Claude connector settings. The unassigned tickets above are the closest available proxy for unclaimed inbound work.</span>
+  </div>
+
+</main>
+
+<!-- Footer -->
+<footer class="footer">
+  <span>PM International · South CS Team · HubSpot Account 25864942</span>
+  <span>Generated June 29, 2026</span>
+</footer>
+
+<script>
+  /* ── Animate KPI count-up ── */
+  function countUp(el, target, duration, isFloat) {
+    const start = performance.now();
+    function step(now) {
+      const progress = Math.min((now - start) / duration, 1);
+      const ease = 1 - Math.pow(1 - progress, 3);
+      const val = Math.round(ease * target);
+      el.textContent = val.toLocaleString();
+      if (progress < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  function countUpPct(el, target, duration) {
+    const start = performance.now();
+    function step(now) {
+      const progress = Math.min((now - start) / duration, 1);
+      const ease = 1 - Math.pow(1 - progress, 3);
+      const val = (ease * target).toFixed(1);
+      el.textContent = val + '%';
+      if (progress < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  /* ── Intersection observer for scroll-in animations ── */
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      const el = entry.target;
+      const delay = parseInt(el.dataset.delay || 0);
+
+      setTimeout(() => {
+        el.classList.add('visible');
+
+        /* Animate bar fills inside this card */
+        el.querySelectorAll('.bar-fill[data-width], .stage-bar-fill[data-width]').forEach(bar => {
+          setTimeout(() => { bar.style.width = bar.dataset.width + '%'; }, 100);
+        });
+      }, delay);
+
+      observer.unobserve(el);
+    });
+  }, { threshold: 0.15 });
+
+  /* ── Table row stagger ── */
+  const tableObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      entry.target.querySelectorAll('tbody tr').forEach((row, i) => {
+        setTimeout(() => row.classList.add('visible'), i * 60);
+      });
+      tableObserver.unobserve(entry.target);
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.kpi, .card').forEach(el => observer.observe(el));
+  const tableEl = document.querySelector('.ticket-table');
+  if (tableEl) tableObserver.observe(tableEl.closest('.card'));
+
+  /* ── Alert observe ── */
+  const alertObserver = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); alertObserver.unobserve(e.target); } });
+  }, { threshold: 0.5 });
+  const alertBox = document.getElementById('alert-box');
+  if (alertBox) alertObserver.observe(alertBox);
+
+  /* ── KPI count-up on visibility ── */
+  const kpiObs = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (!e.isIntersecting) return;
+      const id = e.target.id;
+      if (id === 'kpi-open') countUp(e.target, 71, 900);
+      if (id === 'kpi-closed') countUp(e.target, 5411, 1200);
+      if (id === 'kpi-unassigned') countUp(e.target, 14, 700);
+      kpiObs.unobserve(e.target);
+    });
+  }, { threshold: 0.5 });
+  ['kpi-open','kpi-closed','kpi-unassigned'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) kpiObs.observe(el);
+  });
+
+  /* ── Resolution rate count-up ── */
+  const resEl = document.getElementById('res-counter');
+  if (resEl) {
+    const resObs = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (!e.isIntersecting) return;
+        countUpPct(e.target, 98.7, 1200);
+        resObs.unobserve(e.target);
+      });
+    }, { threshold: 0.5 });
+    resObs.observe(resEl);
+  }
+
+  /* ── Donut chart ── */
+  window.addEventListener('load', () => {
+    const ctx = document.getElementById('donutChart');
+    if (!ctx) return;
+    new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Open', 'Closed'],
+        datasets: [{
+          data: [71, 5411],
+          backgroundColor: ['#2a78d6', '#1baf7a'],
+          borderColor: '#ffffff',
+          borderWidth: 3,
+          hoverOffset: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '72%',
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: ctx => {
+                const val = ctx.parsed;
+                const total = ctx.dataset.data.reduce((a,b) => a+b, 0);
+                const pct = ((val / total) * 100).toFixed(1);
+                return ` ${val.toLocaleString()} tickets (${pct}%)`;
+              }
+            }
+          }
+        },
+        animation: { animateRotate: true, duration: 900 }
+      }
+    });
+  });
+</script>
+</body>
+</html>
