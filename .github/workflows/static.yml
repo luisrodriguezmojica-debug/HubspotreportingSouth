@@ -216,12 +216,6 @@ tbody tr.in{opacity:1;transform:translateX(0)}
   <div class="nav-div"></div>
   <div class="nav-label">Zendesk &middot; Apr–May 2026</div>
   <button class="nav-btn" onclick="show('zendesk')" id="nav-zendesk"><div class="nav-dot" style="background:#4ecfc5"></div>Zendesk Archive</button>
-
-  <div class="sb-source">
-    <p>HubSpot: live pull Jul 3 2026<br>Zendesk: exported Jun 30 2026<br>Email data needs reauth</p>
-  </div>
-</aside>
-
 <!-- MAIN -->
 <main class="main">
   <div class="topbar">
